@@ -141,8 +141,7 @@
                 broadcast: true
             }
 
-            // const devName = 'daccdaccdacc'
-            const devName = 'daccsharashi'
+            const devName = 'dacccoin'
             const productName = 'eosio.token'
 
             return {
@@ -311,19 +310,21 @@
                 const accountFrom = this.scatter.identity.accounts.find(account => account.blockchain === 'eos');
 
                 if (accountFrom) {
+
                     this.accountName = accountFrom.name
                     const accountTo = this.transferTo;
-
                     const eosOptions = {
+                        keyProvider: this.privateKey,
                         authorization: `${this.accountName}@active`
                     };
+
                     this.showLoading = true
                     this.eos.contract(this.eosio)
                         .then(contract => {
                             this.showLoading = false
                             console.log(contract);
                             // contract.buykeys({player: accountFrom.name, keys: this.countEos + ' EOS'}, eosOptions).then(res => {
-                            contract.transfer({from: accountFrom.name, to: accountTo, quantity: this.countEos + ' EOS', memo: ''}, eosOptions).then(res => {
+                            contract.transfer({from: accountFrom.name, to: accountTo, quantity: this.countEos + ' SYS', memo: ''}, eosOptions).then(res => {
                                 this.$swal({
                                     type: 'success',
                                     text: 'Successful transaction',
@@ -444,10 +445,10 @@
 
                             if (data && this.endTime != data.end_time) {
                                 console.log(data)
-                                this.totalCoin = data.total_coin
-                                this.totalEos = data.total_eos
+                                this.totalCoin = data.nr_of_coins
+                                this.totalEos = data.bonus
                                 this.endTime = data.end_time
-                                this.currentPrice = data.current_price
+                                this.currentPrice = data.next_token_rate
                                 this.countTime = this.endTime - (new Date('2018-08-13T08:47:16.000').getTime() / 1000)
                                 this.countDown(this.countTime)
                             }
@@ -496,7 +497,7 @@
         },
         computed: {
             countEos () {
-                let num = this.coin * 1
+                let num = this.coin * (this.currentPrice / 10000)
                 return num.toFixed(4)
             }
         },
