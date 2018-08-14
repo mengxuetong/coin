@@ -112,6 +112,7 @@
 <script>
     import HeaderBar from '../components/HeaderBar'
     import FooterBar from '../components/FooterBar'
+    import Config from '../config'
     import Eos from 'eosjs'
     import $ from 'jquery'
     import 'jqueryTimer'
@@ -123,27 +124,6 @@
             FooterBar
         },
         data () {
-            const dev = {
-                protocol:'http',
-                blockchain:'eos',
-                host:'193.93.219.219',
-                port: 8888,
-                chainId: '038f4b0fc8ff18a4f0842a8f0564611f6e96e8535901dd45e43ac8691a1c4dca',
-                broadcast: true
-            }
-
-            const product = {
-                protocol:'https', // Defaults to https
-                blockchain:'eos',
-                host:'nodes.get-scatter.com', // ( or null if endorsed chainId )
-                port: 443, // ( or null if defaulting to 80 )
-                chainId: 'aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906',
-                broadcast: true
-            }
-
-            const devName = 'dacccoin'
-            const productName = 'eosio.token'
-
             return {
                 showDown: false,
                 showLoading: false,
@@ -166,17 +146,17 @@
                 publicKey: '',
                 loginName: '',
                 accountName:'',
-                transferTo: 'daccsharashi',
+                transferTo: Config.accountToName,
                 identity: null,
-                tableName: 'accounts',
-                gamesName: 'games',
-                tokenName: devName,
+                tableName: Config.userTable,
+                gamesName: Config.gamesTable,
+                tokenName: Config.tokenName,
                 eosio: 'eosio.token',
-                network: dev,
+                network: Config.network,
                 payAmount: '0.0001 EOS',
                 requiredFields: {
                     accounts: [
-                        {...dev}
+                        {...Config.network}
                     ]
                 },
                 leftTime: 60,
@@ -188,7 +168,6 @@
                 },
                 myPlayer: null,
                 tableTimer: null
-
             }
         },
         methods: {
@@ -206,7 +185,7 @@
                     if (this.scatter && this.scatter.identity) {
                         await this.destroyIdentity()
                         await this.getEos()
-                    } else if (this.scatter && !this.scatter.identity) {
+                    }else if (this.scatter && !this.scatter.identity) {
                         await this.getEos()
                     }
                     this.findTable()
@@ -322,9 +301,7 @@
                     this.eos.contract(this.eosio)
                         .then(contract => {
                             this.showLoading = false
-                            console.log(contract);
-                            // contract.buykeys({player: accountFrom.name, keys: this.countEos + ' EOS'}, eosOptions).then(res => {
-                            contract.transfer({from: accountFrom.name, to: accountTo, quantity: this.countEos + ' SYS', memo: ''}, eosOptions).then(res => {
+                            contract.transfer({from: accountFrom.name, to: accountTo, quantity: this.countEos + ' EOS', memo: this.coin}, eosOptions).then(res => {
                                 this.$swal({
                                     type: 'success',
                                     text: 'Successful transaction',
@@ -385,8 +362,12 @@
                 }
             },
             countDown (times) {
+                if (this.timer) {
+                    clearInterval(this.timer)
+                }
 
                 this.timer=null;
+
                 this.timer=setInterval(() => {
                     var day=0,
                         hour=0,
@@ -442,14 +423,12 @@
                     // find games table
                     await findTables.call(this, {tableName: this.gamesName}, function(res) {
                             let data = res.rows[0]
-
                             if (data && this.endTime != data.end_time) {
-                                console.log(data)
                                 this.totalCoin = data.nr_of_coins
                                 this.totalEos = data.bonus
                                 this.endTime = data.end_time
                                 this.currentPrice = data.next_token_rate
-                                this.countTime = this.endTime - (new Date('2018-08-13T08:47:16.000').getTime() / 1000)
+                                this.countTime = this.endTime - (new Date(this.currentTime).getTime() / 1000)
                                 this.countDown(this.countTime)
                             }
                         })
