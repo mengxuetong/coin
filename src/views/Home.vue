@@ -169,7 +169,7 @@
                 transferTo: 'daccsharashi',
                 identity: null,
                 tableName: 'accounts',
-                gamesName: 'app',
+                gamesName: 'games',
                 tokenName: devName,
                 eosio: 'eosio.token',
                 network: dev,
