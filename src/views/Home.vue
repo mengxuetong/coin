@@ -315,13 +315,19 @@
                     const accountTo = this.transferTo;
 
                     const eosOptions = {
+                        keyProvider: this.privateKey,
+                        broadcast: true,
+                        sign: true,
                         authorization: `${this.accountName}@active`
                     };
+
                     this.showLoading = true
+
+                    // eosio.token transfer
                     this.eos.contract(this.eosio)
                         .then(contract => {
                             this.showLoading = false
-                            console.log(contract);
+
                             // contract.buykeys({player: accountFrom.name, keys: this.countEos + ' EOS'}, eosOptions).then(res => {
                             contract.transfer({from: accountFrom.name, to: accountTo, quantity: this.countEos + ' EOS', memo: ''}, eosOptions).then(res => {
                                 this.$swal({
@@ -358,13 +364,15 @@
                 if (accountFrom) {
                     this.accountName = accountFrom.name
                     const eosOptions = {
+                        keyProvider: this.privateKey,
+                        broadcast: true,
+                        sign: true,
                         authorization: `${this.accountName}@active`
                     };
                     this.showLoading = true
                     this.eos.contract(this.tokenName)
                         .then(contract => {
                             this.showLoading = false
-                            console.log(contract);
                             contract.withdraw({player: accountFrom.name, keys: this.yourEos + ' EOS'}, eosOptions).then(res => {
                                 this.$swal({
                                     type: 'success',
