@@ -1,7 +1,7 @@
 <template>
     <footer class="footer-bar clearfix">
         <div class="content-width text-center">
-            © 2018 Vinci. All Rights Reserved.
+            © 2018 DACC. All Rights Reserved.
         </div>
     </footer>
 </template>

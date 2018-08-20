@@ -10,6 +10,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "animate.css": "^3.7.0",
     "babel-polyfill": "^6.26.0",
     "eosjs": "^16.0.0",
     "jquery": "^3.3.1",

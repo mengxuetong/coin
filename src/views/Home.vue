@@ -3,7 +3,11 @@
         <header-bar :total-eos="totalEos" :total-coin="totalCoin" :login-name="loginName" :times="times"></header-bar>
         <div class="content content-width clearfix">
             <div class="coin-top-tip text-center">
-                <h3>Put a coin and surprise yourself</h3>
+                <h3>
+                    <transition enter-active-class="animated bounceIn" leave-active-class="animated bounceOut">
+                        <p v-show="isAnimate">Put coins and surprise yourself</p>
+                    </transition>
+                </h3>
             </div>
             <div class="total-eos-wrap text-center">
                 <!--{{totalEos | formatPrice}}eos-->
@@ -14,6 +18,11 @@
                 <div class="countdown-box">{{times.minute}}</div>:
                 <div class="countdown-box">{{times.second}}</div>
             </div>
+            <!--<div class="timer time-top text-center">-->
+                <!--<div class="hours"></div>-->
+                <!--<div class="minutes"></div>-->
+                <!--<div class="seconds"></div>-->
+            <!--</div>-->
             <div class="input-area-wrap">
                 <div class="input-icon-box float-l text-center">
                     <i class="eos-icon"></i>
@@ -22,13 +31,13 @@
                 <div class="input-coin-box text-center">{{coin}} coin</div>
             </div>
             <div class="coin-buttons-wrap">
-                <button class="coin-button button-120" :class="{'active': coin == 1}" @click="addCoin(1)">+1 Coin</button>
-                <button class="coin-button button-120" @click="addCoin(5)" :class="{'active': coin == 5}">+5 Coin</button>
-                <button class="coin-button button-120" @click="addCoin(10)" :class="{'active': coin == 10}">+10 Coin</button>
-                <button class="coin-button button-120" @click="addCoin(20)" :class="{'active': coin == 20}">+20 Coin</button>
-                <button class="coin-button button-140" @click="addCoin(50)" :class="{'active': coin == 50}">+50 Coin</button>
-                <button class="coin-button button-160" @click="addCoin(100)" :class="{'active': coin == 100}">+100 Coin</button>
-                <button class="coin-button button-160" @click="addCoin(200)" :class="{'active': coin == 200}">+200 Coin</button>
+                <button class="coin-button button-120" @click="addCoin(1)">+1 Coin</button>
+                <button class="coin-button button-120" @click="addCoin(5)">+5 Coin</button>
+                <button class="coin-button button-120" @click="addCoin(10)">+10 Coin</button>
+                <button class="coin-button button-120" @click="addCoin(20)">+20 Coin</button>
+                <button class="coin-button button-140" @click="addCoin(50)">+50 Coin</button>
+                <button class="coin-button button-160" @click="addCoin(100)">+100 Coin</button>
+                <button class="coin-button button-160" @click="addCoin(200)">+200 Coin</button>
             </div>
             <div class="operate-buttons-wrap">
                 <button class="reset-button" @click="resetCoin">Reset coin</button>
@@ -44,21 +53,13 @@
                     <div class="area-body">
                         <div v-if="accountName">
                             <ul class="area-content">
-                                <li>
-                                <span class="left">
-                                    Your Coins
-                                </span>
-                                    <span class="right">
-                                    {{yourCoin}} COIN
-                                </span>
-                                </li>
-                                <li>
-                                <span class="left">
-                                    Your Earnings
-                                </span>
-                                    <span class="right">
-                                    {{yourEos}}
-                                </span>
+                                <li v-if="accountName">
+                                    <span class="left">
+                                        Your Earnings
+                                    </span>
+                                        <span class="right">
+                                        {{yourEos}}
+                                    </span>
                                 </li>
                             </ul>
                             <div class="area-foot-wrap text-center">
@@ -94,6 +95,15 @@
                                     {{totalEos}}
                                 </span>
                             </li>
+                            <li>
+                                <span class="left">
+                                    Your Coins
+                                </span>
+                                <span class="right">
+                                    {{yourCoin}} COIN
+                                </span>
+                            </li>
+
                         </ul>
                     </div>
                 </div>
@@ -101,21 +111,32 @@
         </div>
         <footer-bar></footer-bar>
         <div class="layer" v-if="showDown">
-            <a href="https://chrome.google.com/webstore/detail/scatter/ammjpmhgckkpcamddpolhchgomcojkle">download scatter extension </a>
+            <a href="https://chrome.google.com/webstore/detail/scatter/ammjpmhgckkpcamddpolhchgomcojkle">Click it, to download the scatter extension </a>
         </div>
-        <div class="layer" v-if="showLoading">
-            <p>Please Wait</p>
+        <div class="layer" v-if="showChrome">
+            <p>Please open it in chrome browser</p>
+        </div>
+        <div class="layer" v-show="showLoading">
+            <p>Please wait...</p>
+        </div>
+        <div class="layer transparent-0" v-show="pageLoading">
+            <div id="ajaxloader1"></div>
         </div>
     </div>
 </template>
 
-<script>
+<script scoped>
     import HeaderBar from '../components/HeaderBar'
     import FooterBar from '../components/FooterBar'
     import Config from '../config'
     import Eos from 'eosjs'
-    import $ from 'jquery'
-    import 'jqueryTimer'
+    // import $ from 'jquery'
+    // import 'jqueryTimer'
+
+    const checkBrowser = function() {
+        let agent = window.navigator.userAgent
+        return /chrome/i.test(agent)
+    }
 
     export default {
         name: "Home",
@@ -124,9 +145,13 @@
             FooterBar
         },
         data () {
+
             return {
+                isAnimate: false,
                 showDown: false,
+                showChrome: false,
                 showLoading: false,
+                pageLoading: true,
                 roundNum: '',
                 totalEos: '',
                 totalCoin: '',
@@ -142,7 +167,7 @@
                 eos: null,
                 generatingAccount:false,
                 sign: '',
-                privateKey: '5JjZrpe9jMCCfH3euCq1TYJ9epy7iAxvGWUKnRD1axZLYvEhnr8',
+                privateKey: '',
                 publicKey: '',
                 loginName: '',
                 accountName:'',
@@ -171,25 +196,28 @@
             }
         },
         methods: {
-            init () {
-                (async () => {
-
+            init: async function() {
+                    if (!checkBrowser()) {
+                        this.pageLoading = false
+                        this.showChrome = true
+                        return
+                    }
                     await this.getScatter() // get scatter
 
                     // check scatter
                     if (!this.scatter){
+                        this.pageLoading = false
                         this.showDown = true
                         return false
                     }
 
-                    if (this.scatter && this.scatter.identity) {
-                        await this.destroyIdentity()
-                        await this.getEos()
-                    }else if (this.scatter && !this.scatter.identity) {
-                        await this.getEos()
-                    }
+                    // if (this.scatter && this.scatter.identity) {
+                    //     await this.destroyIdentity()
+                    //     await this.getEos()
+                    // }
+                    await this.getEos()
                     this.findTable()
-                })()
+                    this.getIdentity(this.requiredFields)
             },
             // destroy identity
             destroyIdentity () {
@@ -216,9 +244,6 @@
                     let getScatter = async () => {
                         await this.getScatter()
                         deferred = await getIdentity.call(this)
-                        deferred.then(res => {
-                            find.call(this)
-                        })
                     }
                     getScatter()
                 } else {
@@ -245,8 +270,6 @@
                 }
                 function find () {
                     this.accountName = this.getAccount().name
-
-                    this.getBalance()
                 }
                 return deferred
 
@@ -277,6 +300,9 @@
             },
             // transfer
             doContract () {
+                if (this.coin === 0) {
+                    return false
+                }
                 if (!this.checkScatter()) {
                     this.showDown = true
                     return false
@@ -286,6 +312,16 @@
                     return false
                 }
 
+                /*if (this.countTime <= 0) {
+                    this.$swal({
+                        type: 'warning',
+                        text: 'Game over',
+                        confirmButtonText: 'sure',
+                        showCancelButton: false
+                    })
+                    return false
+                }*/
+
                 const accountFrom = this.scatter.identity.accounts.find(account => account.blockchain === 'eos');
 
                 if (accountFrom) {
@@ -293,30 +329,33 @@
                     this.accountName = accountFrom.name
                     const accountTo = this.transferTo;
                     const eosOptions = {
-                        keyProvider: this.privateKey,
+                        // keyProvider: this.privateKey,
                         authorization: `${this.accountName}@active`
                     };
 
                     this.showLoading = true
+
                     this.eos.contract(this.eosio)
                         .then(contract => {
-                            this.showLoading = false
                             contract.transfer({from: accountFrom.name, to: accountTo, quantity: this.countEos + ' EOS', memo: this.coin}, eosOptions).then(res => {
+                                this.showLoading = false
                                 this.$swal({
                                     type: 'success',
                                     text: 'Successful transaction',
                                     confirmButtonText: 'sure',
                                     showCancelButton: false
-                                }).then((res) => {})
+                                })
 
                             }).catch(e => {
                                 this.showLoading = false
-                                console.log(e);
                                 if(e.toString().includes("overdrawn balance") || e.toString().includes("no balance object found")){
                                     alert("No money, go back to Getting Started and refill")
                                 }
                             })
 
+                        })
+                        .catch(e => {
+                            console.log(e)
                         })
                 }
 
@@ -331,33 +370,67 @@
                     return false
                 }
 
+                if (parseFloat(this.yourEos) <= 0) {
+                    this.$swal({
+                        type: 'warning',
+                        text: 'Your balance is insufficient',
+                        confirmButtonText: 'sure',
+                        showCancelButton: false
+                    }).then((res) => {})
+                    return false
+                }
+
                 const accountFrom = this.scatter.identity.accounts.find(account => account.blockchain === 'eos');
 
                 if (accountFrom) {
                     this.accountName = accountFrom.name
                     const eosOptions = {
+                        keyProvider: this.privateKey,
                         authorization: `${this.accountName}@active`
                     };
                     this.showLoading = true
+
                     this.eos.contract(this.tokenName)
                         .then(contract => {
-                            this.showLoading = false
-                            console.log(contract);
-                            contract.withdraw({player: accountFrom.name, keys: this.yourEos + ' EOS'}, eosOptions).then(res => {
+                            contract.withdraw({account: accountFrom.name, quantity: this.yourEos}, eosOptions).then(res => {
+                                this.showLoading = false
                                 this.$swal({
                                     type: 'success',
                                     text: 'Successful transaction',
                                     confirmButtonText: 'sure',
                                     showCancelButton: false
-                                }).then((res) => {})
+                                })
 
                             }).catch(e => {
                                 this.showLoading = false
-                                console.log(e);
+                                if (e) {
+                                    let msg = e.error.details[0].message
+                                    this.$swal({
+                                        type: 'warning',
+                                        text: msg,
+                                        confirmButtonText: 'sure',
+                                        showCancelButton: false
+                                    })
+                                }
                                 if(e.toString().includes("overdrawn balance") || e.toString().includes("no balance object found")){
-                                    alert("No money, go back to Getting Started and refill")
+                                    this.$swal({
+                                        type: 'warning',
+                                        text: 'No money, go back to Getting Started and refill',
+                                        confirmButtonText: 'sure',
+                                        showCancelButton: false
+                                    })
                                 }
                             })
+                        })
+                        .catch(e => {
+                            if (e) {
+                                this.$swal({
+                                    type: 'warning',
+                                    text: e.toString(),
+                                    confirmButtonText: 'sure',
+                                    showCancelButton: false
+                                })
+                            }
                         })
                 }
             },
@@ -366,9 +439,7 @@
                     clearInterval(this.timer)
                 }
 
-                this.timer=null;
-
-                this.timer=setInterval(() => {
+                this.timer = setInterval(() => {
                     var day=0,
                         hour=0,
                         minute=0,
@@ -396,11 +467,7 @@
                         clearInterval(this.timer)
                     }
                     times--;
-                },1000);
-
-                if(times<=0){
-                    clearInterval(this.timer);
-                }
+                }, 1000);
             },
             // find table rows
             findTable () {
@@ -418,18 +485,30 @@
                     })
 
                     //find info for system time
-                    await getInfo.call(this)
+                    // await getInfo.call(this)
 
                     // find games table
                     await findTables.call(this, {tableName: this.gamesName}, function(res) {
+                            this.pageLoading = false
+
                             let data = res.rows[0]
-                            if (data && this.endTime != data.end_time) {
+                            if (data && this.endTime != data.end_time && data.end_time !== 0) {
                                 this.totalCoin = data.nr_of_coins
                                 this.totalEos = data.bonus
                                 this.endTime = data.end_time
                                 this.currentPrice = data.next_token_rate
-                                this.countTime = this.endTime - (new Date(this.currentTime).getTime() / 1000)
-                                this.countDown(this.countTime)
+                                this.roundNum = data.round
+                                this.countTime = this.endTime - (new Date().getTime() / 1000)
+                                this.countDown(this.countTime - 1)
+
+                                // let myDate = new Date(this.endTime * 1000).format('yyyy/MM/dd hh:mm:ss')
+                                // $(".hours, .minutes, .seconds").empty()
+
+                                // let flip = $(".timer").flipTimer({
+                                //     direction: 'down',
+                                //     date: myDate,
+                                //     template: ''
+                                // })
                             }
                         })
 
@@ -449,14 +528,12 @@
                     });
                 }
 
-                function getInfo () {
-                    this.eos.getInfo({})
-                        .then(res => {
-                            this.currentTime = res.head_block_time
-                        })
-                }
-
                 initFind.call(this)
+                    .then(res => {
+                        if (!this.isAnimate) {
+                            this.isAnimate = true
+                        }
+                    })
             },
             getBalance () {
                 this.eos.getCurrencyBalance({
@@ -468,10 +545,10 @@
                 });
             },
             addCoin (num) {
-                this.coin = num
+                this.coin += num
             },
             resetCoin () {
-                this.coin = 1
+                this.coin = 0
             }
         },
         computed: {
@@ -487,25 +564,30 @@
             this.$nextTick(() => {
                 // let d = new Date();
                 // let myDate = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + d.getMinutes() + ':' + (d.getSeconds() + 30);
-                // let myDate = new Date(234793247932)
+                // let myDate = new Date(15667778888)
                 // $(".timer").flipTimer({
                 //    direction: 'down',
                 //    date: myDate
                 // })
                 // this.countDown(this.leftTime)
             })
+        },
+        beforeDestroy () {
+            if (this.timer) {
+                clearInterval(this.timer)
+            }
         }
     }
 </script>
 
 <style lang="less" scoped>
     @import "../assets/less/variable.less";
-    
-    @keyframes rotatey {
-        
+    .time-top {
+        margin-top: 40px;
     }
     .layer {
         position: fixed;
+        z-index: 1000;
         top: 0;
         right: 0;
         bottom: 0;
@@ -516,7 +598,10 @@
         justify-content: center;
         align-items: center;
 
-        a,a:link {
+        &.transparent-0 {
+            background-color: #111 !important;
+        }
+        p, a, a:link {
             color: #fff;
             font-size: 52px;
         }
@@ -615,6 +700,7 @@
             color: #fff;
             cursor: pointer;
             background:rgba(160,22,239,1);
+            border: 1px solid #fff;
             border-radius:10px;
         }
     }

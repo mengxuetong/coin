@@ -7,6 +7,7 @@
      * @param element {HTMLElement} the element flipTimer is called on
      */
     var flipTimer = function(element, options) {
+
         this.element = element;
 
         // ensures the HTMLElement has a class of 'flipTimer'

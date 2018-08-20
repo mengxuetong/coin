@@ -28,9 +28,9 @@ module.exports = {
     extensions: ['.js', '.vue', '.json'],
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
-      '@': resolve('src'),
-      'jquery': 'jquery',
-      'jqueryTimer': resolve('src/assets/js/flipTimer.js')
+      '@': resolve('src')
+      // 'jquery': 'jquery',
+      // 'jqueryTimer': resolve('src/assets/js/flipTimer.js')
     }
   },
   plugins: [
@@ -47,7 +47,12 @@ module.exports = {
         use: [
           'style-loader',
           { loader: 'css-loader', options: { importLoaders: 1 } },
+          'postcss-loader',
           'less-loader'
+        ],
+        include: [
+            /src/,//在src目录下的css需要编译
+            '/node_modules/animate.css/animate.css'//增加swiper目录
         ]
       },
       {
