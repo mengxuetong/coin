@@ -111,10 +111,10 @@
         </div>
         <footer-bar></footer-bar>
         <div class="layer" v-if="showDown">
-            <a href="https://chrome.google.com/webstore/detail/scatter/ammjpmhgckkpcamddpolhchgomcojkle">Click it, to download the scatter extension </a>
+            <a href="https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn?hl=zh-CN">Install the MetaMask</a>
         </div>
         <div class="layer" v-if="showChrome">
-            <p>Please open it in chrome browser</p>
+            <p>Please use chrome</p>
         </div>
         <div class="layer" v-show="showLoading">
             <p>Please wait...</p>
@@ -129,15 +129,31 @@
     import HeaderBar from '../components/HeaderBar'
     import FooterBar from '../components/FooterBar'
     import Config from '../config'
-    import Eos from 'eosjs'
-    // import $ from 'jquery'
-    // import 'jqueryTimer'
+    import Web3 from 'web3'
+
 
     const checkBrowser = function() {
         let agent = window.navigator.userAgent
         return /chrome/i.test(agent)
     }
-
+    const initWeb3 = function () {
+        return new Promise(function (resolve, reject) {
+            // Check for injected web3 (mist/metamask)
+            let web3js = window.web3
+            if (typeof web3js !== 'undefined') {
+                let web3 = new Web3(web3js.currentProvider)
+                resolve({
+                    // injectedWeb3: web3.isConnected(),
+                    web3 () {
+                        return web3
+                    }
+                })
+            } else {
+                // web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')) GANACHE FALLBACK
+                reject(new Error('Unable to connect to Metamask'))
+            }
+        })
+    }
     export default {
         name: "Home",
         components: {
@@ -218,6 +234,19 @@
                     await this.getEos()
                     this.findTable()
                     this.getIdentity(this.requiredFields)
+            },
+            initWeb: async function() {
+                let web3Promise
+                try {
+                    web3Promise = await initWeb3()
+                }catch (err){
+                    console.log(err)
+                }
+                if (web3Promise) {
+                    this.web3 = web3Promise.web3()
+                    console.log(this.web3)
+                }
+
             },
             // destroy identity
             destroyIdentity () {
@@ -558,7 +587,7 @@
             }
         },
         created () {
-            this.init()
+            this.initWeb()
         },
         mounted () {
             this.$nextTick(() => {
