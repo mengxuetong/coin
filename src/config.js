@@ -10,7 +10,9 @@ const dev = {
     tokenName: 'dacccoin',
     accountToName: 'dacccoin',
     userTable: 'accounts',
-    gamesTable: 'games'
+    gamesTable: 'games',
+    abi: [{"constant":false,"inputs":[{"name":"a","type":"uint256"},{"name":"b","type":"uint256"}],"name":"add","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"nonpayable","type":"function"}],
+    address: '0x4a706efd42c254f8407712dbbfea668758fe652f'
 }
 
 const product = {

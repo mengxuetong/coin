@@ -125,23 +125,24 @@
     </div>
 </template>
 
-<script scoped>
+<script type="text/ecmascript-6" scoped>
     import HeaderBar from '../components/HeaderBar'
     import FooterBar from '../components/FooterBar'
     import Config from '../config'
     import Web3 from 'web3'
 
-
     const checkBrowser = function() {
         let agent = window.navigator.userAgent
         return /chrome/i.test(agent)
     }
+
     const initWeb3 = function () {
         return new Promise(function (resolve, reject) {
             // Check for injected web3 (mist/metamask)
             let web3js = window.web3
+            let web3
             if (typeof web3js !== 'undefined') {
-                let web3 = new Web3(web3js.currentProvider)
+                web3 = new Web3(web3js.currentProvider)
                 resolve({
                     // injectedWeb3: web3.isConnected(),
                     web3 () {
@@ -149,8 +150,15 @@
                     }
                 })
             } else {
-                // web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')) GANACHE FALLBACK
-                reject(new Error('Unable to connect to Metamask'))
+                web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:8545')) //GANACHE FALLBACK
+                resolve({
+                    // injectedWeb3: web3.isConnected(),
+                    web3 () {
+                        return web3
+                    }
+                })
+                // console.log(web3);
+                // reject(new Error('Unable to connect to Metamask'))
             }
         })
     }
@@ -161,7 +169,6 @@
             FooterBar
         },
         data () {
-
             return {
                 isAnimate: false,
                 showDown: false,
@@ -208,7 +215,11 @@
                     second: '00'
                 },
                 myPlayer: null,
-                tableTimer: null
+                tableTimer: null,
+                web3: null,
+                contract: null,
+                abi: Config.abi,
+                address: Config.address
             }
         },
         methods: {
@@ -234,19 +245,6 @@
                     await this.getEos()
                     this.findTable()
                     this.getIdentity(this.requiredFields)
-            },
-            initWeb: async function() {
-                let web3Promise
-                try {
-                    web3Promise = await initWeb3()
-                }catch (err){
-                    console.log(err)
-                }
-                if (web3Promise) {
-                    this.web3 = web3Promise.web3()
-                    console.log(this.web3)
-                }
-
             },
             // destroy identity
             destroyIdentity () {
@@ -578,6 +576,34 @@
             },
             resetCoin () {
                 this.coin = 0
+            },
+            initWeb: async function() {
+                let web3Promise
+                try {
+                    web3Promise = await initWeb3()
+                }catch (err){
+                    console.log(err)
+                }
+
+                if (web3Promise) {
+                    this.web3 = web3Promise.web3()
+                }
+
+            },
+            checkWeb3 () {
+                if (this.web3) {
+                    return true
+                }
+                return false
+            },
+            createContract () {
+                return this.web3.eth.contract(this.abi)
+            },
+            connectContract () {
+                if (!this.contract) {
+                    return
+                }
+                this.contract.at(this.address)
             }
         },
         computed: {
@@ -588,6 +614,16 @@
         },
         created () {
             this.initWeb()
+                .then(res => {
+                    if (this.checkWeb3()) {
+                        this.createContract()
+                        this.contractMethods = this.connectContract()
+                        console.log(this.contractMethods)
+                    }
+                })
+                .catch(err => {
+                    console.log(err)
+                })
         },
         mounted () {
             this.$nextTick(() => {
