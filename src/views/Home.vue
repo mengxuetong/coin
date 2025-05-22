@@ -163,7 +163,7 @@
                 eos: null,
                 generatingAccount:false,
                 sign: '',
-                privateKey: '5JjZrpe9jMCCfH3euCq1TYJ9epy7iAxvGWUKnRD1axZLYvEhnr8',
+                privateKey: 'xxxxxx',
                 publicKey: '',
                 loginName: '',
                 accountName:'',
